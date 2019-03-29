@@ -27,20 +27,59 @@ function find() {
 
 
   server.get('/api/projects', async (req, res) => {
+        
+    try {
+        const projects = await db('projects');
+        console.log(projects);
+        res.status(200).json(projects);
+      } catch (error) {
+        res.status(500).json(error);
+      }
+ 
+  });
+  
+  server.get('/api/projects/:id', async (req, res) => {
     
     try {
-      const projects = await db('projects'); // attempt to get all projects from the table
-      res.status(200).json(projects);
+      const id = req.params.id;
+      console.log(id);
+      const projects = await db('projects').where({ id: id }).first(); // attempt to get all projects from the table
+      const projectActions = await db('actions');
+      console.log(projectActions);
+
+            // change truth value from 0 or 1 to false or true
+      const comp = projects.completed;
+      let truthvalue = false;
+      if (comp === 1) {
+          console.log('completed value is', comp);
+          truthvalue = true;
+      }
+
+            // change truth value from 0 or 1 to false or true in the actions array
+      projectActions.forEach( action => action.completed = (action.completed === 0)? false : true   )
+      console.log(projectActions);
+
+      const project = {
+                            id: projects.id,
+                            name: projects.name,
+                            description: projects.description,
+                            completed: truthvalue,
+                            actions: projectActions
+                      }
+      console.log(projects.name);
+
+
+      res.status(200).json(project);
     } catch (error) {
       res.status(500).json(error);
     }
   });
   
-  
   server.get('/api/actions', async (req, res) => {
     
     try {
       const actions = await db('actions');
+      
       res.status(200).json(actions);
     } catch (error) {
       res.status(500).json(error);
